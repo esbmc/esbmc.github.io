@@ -70,15 +70,7 @@ jobs:
 
       - name: Generate Doxygen API reference (/docs/api)
         working-directory: ${{ github.workspace }}
-        run: |
-          maj=$(sed -nE 's/^set\(ESBMC_VERSION_MAJOR ([0-9]+)\).*/\1/p' CMakeLists.txt)
-          min=$(sed -nE 's/^set\(ESBMC_VERSION_MINOR ([0-9]+)\).*/\1/p' CMakeLists.txt)
-          pat=$(sed -nE 's/^set\(ESBMC_VERSION_PATCH ([0-9]+)\).*/\1/p' CMakeLists.txt)
-          mkdir -p website/public/docs
-          ( cat .doxygen; \
-            echo "OUTPUT_DIRECTORY = website/public/docs"; \
-            echo "HTML_OUTPUT = api"; \
-            echo "PROJECT_NUMBER = ${maj}.${min}.${pat}" ) | doxygen -
+        run: scripts/gen-docs.sh website/public/docs api
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
