@@ -58,6 +58,28 @@ jobs:
         run: |
           hugo --gc --minify --contentDir "content" --baseURL "${{ steps.pages.outputs.base_url }}/"
 
+      # Generate the Doxygen API reference straight into the built site so it is
+      # served at https://esbmc.github.io/docs/api alongside the Hugo content.
+      # Runs after Hugo so it is not clobbered by the site build. The Doxyfile
+      # (.doxygen) lives in the esbmc/esbmc checkout at the workspace root.
+      - name: Install Doxygen and Graphviz
+        working-directory: ${{ github.workspace }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends doxygen graphviz
+
+      - name: Generate Doxygen API reference (/docs/api)
+        working-directory: ${{ github.workspace }}
+        run: |
+          maj=$(sed -nE 's/^set\(ESBMC_VERSION_MAJOR ([0-9]+)\).*/\1/p' CMakeLists.txt)
+          min=$(sed -nE 's/^set\(ESBMC_VERSION_MINOR ([0-9]+)\).*/\1/p' CMakeLists.txt)
+          pat=$(sed -nE 's/^set\(ESBMC_VERSION_PATCH ([0-9]+)\).*/\1/p' CMakeLists.txt)
+          mkdir -p website/public/docs
+          ( cat .doxygen; \
+            echo "OUTPUT_DIRECTORY = website/public/docs"; \
+            echo "HTML_OUTPUT = api"; \
+            echo "PROJECT_NUMBER = ${maj}.${min}.${pat}" ) | doxygen -
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
